@@ -2,14 +2,9 @@ require('dotenv').config()
 const express = require('express');
 const request = require('request');
 const Immutable = require('immutable');
-const app = express();
 
 const hueBridgeUrl = process.env.HUE_BRIDGE_URL;
 const username = process.env.HUE_USERNAME;
-
-app.get('/', function (req, res) {
-  res.send('Hello World!')
-})
 
 function initializeLightList() {
   request(`${hueBridgeUrl}/api/${username}/lights`, { json: true }, (err, res, body) => {
@@ -88,6 +83,8 @@ function hasLightUpdated(state, id) {
   }
 }
 
+
+
 let hueLights = Immutable.Map();
 
 // get list of lights
@@ -99,6 +96,18 @@ setInterval(() => {
   updateLightList();
 
 }, 1500);
+
+const app = express();
+
+app.use(express.static(path.join(__dirname, 'react/build')));
+
+app.get('/lights', function (req, res) {
+  res.send(hueLights.toJS());
+})
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname + '/react/build/index.html'));
+});
 
 const port = process.env.PORT || 3000;
 app.listen(port);
