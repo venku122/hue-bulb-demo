@@ -3,7 +3,6 @@
 }
 
 .App-logo {
-  animation: App-logo-spin infinite 20s linear;
   height: 80px;
 }
 
@@ -22,7 +21,38 @@
   font-size: large;
 }
 
-@keyframes App-logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.lightbox {
+  border-radius: 25px;
+  border: 2px solid #73AD21;
+  padding: 20px; 
+  margin: 10px;
+  width: 200px;
+  height: 200px;
+}
+
+.lightlist {
+  display: flex;
+  justify-content: center;
+}
+
+.refresh-button {
+  background: #3498db;
+  border-radius: 28px;
+  font-family: Arial;
+  color: #ffffff;
+  font-size: 20px;
+  padding: 10px 20px 10px 20px;
+  text-decoration: none;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.refresh-button:hover {
+  background: #3cb0fd;
+  text-decoration: none;
+}
+
+.refresh-button:active {
+  background: #198dda;
+  text-decoration: none;
 }

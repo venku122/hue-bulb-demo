@@ -2,7 +2,7 @@ require('dotenv').config()
 const express = require('express');
 const request = require('request');
 const Immutable = require('immutable');
-
+const path = require('path');
 const hueBridgeUrl = process.env.HUE_BRIDGE_URL;
 const username = process.env.HUE_USERNAME;
 
@@ -99,14 +99,14 @@ setInterval(() => {
 
 const app = express();
 
-app.use(express.static(path.join(__dirname, 'react/build')));
+app.use(express.static(path.join(__dirname, 'client/build')));
 
 app.get('/lights', function (req, res) {
   res.send(hueLights.toJS());
 })
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname + '/react/build/index.html'));
+  res.sendFile(path.join(__dirname + '/client/build/index.html'));
 });
 
 const port = process.env.PORT || 3000;
