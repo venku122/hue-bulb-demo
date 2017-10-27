@@ -1,34 +1,73 @@
+require('dotenv').config()
 const express = require('express');
 const request = require('request');
 const Immutable = require('immutable');
 const app = express();
 
+const hueBridgeUrl = process.env.HUE_BRIDGE_URL;
+const username = process.env.HUE_USERNAME;
+
 app.get('/', function (req, res) {
   res.send('Hello World!')
 })
 
-function getLights() {
+function initializeLightList() {
   console.log('requesting status of all lights');
-  request('http://localhost:5000/api/newdeveloper/lights', { json: true }, (err, res, body) => {
+  request(`${hueBridgeUrl}/api/${username}/lights`, { json: true }, (err, res, body) => {
     if (err) { return console.log(err); }
+    for (const [key, value] of Object.entries(body)) {
+      hueLights = hueLights.set(key, Immutable.Map({
+        name: value.name,
+        id: key
+      }));
+    }
+    hueLights.map((light, id) => {
+      getLightStatus(id);
+    });
+  });
+}
 
+function updateLightList() {
+  console.log('updateLightList');
+  request(`${hueBridgeUrl}/api/${username}/lights`, { json: true }, (err, res, body) => {
+    if (err) { return console.log(err); }
+    hueLights = hueLights.filter((light, id) => {
+      return !!body[id];
+    });
     for (const [key, value] of Object.entries(body)) {
       if (!hueLights.has(key)) {
         hueLights = hueLights.set(key, Immutable.Map({
           name: value.name,
           id: key
         }));
-        getLightStatus(key);
       }
     }
+      // check for change of state and print state update
+  hueLights.map((light, id) => {
+    updateLightStatus(id);
   });
+  });
+
 }
 
 function getLightStatus(id) {
-  console.log(`Requesting status of light: ${id}`);
-  request(`http://localhost:5000/api/newdeveloper/lights/${id}`, { json: true }, (err, res, body) => {
+  console.log(`getLightStatus: ${id}`);
+  request(`${hueBridgeUrl}/api/${username}/lights/${id}`, { json: true }, (err, res, body) => {
     if (err) { return console.log(err); }
-    hasLightUpdated(body.state, id)
+    hueLights = hueLights.mergeIn(id, {
+      brightness: body.state.bri,
+      on: body.state.on,
+    });
+    // print out light objects
+    console.log(JSON.stringify(hueLights.get(id), null, 2));
+  });
+}
+
+function updateLightStatus(id) {
+  console.log(`updateLightStatus: ${id}`);
+  request(`${hueBridgeUrl}/api/${username}/lights/${id}`, { json: true }, (err, res, body) => {
+    if (err) { return console.log(err); }
+    hasLightUpdated(body.state, id);
     hueLights = hueLights.mergeIn(id, {
       brightness: body.state.bri,
       on: body.state.on,
@@ -38,7 +77,6 @@ function getLightStatus(id) {
 
 function hasLightUpdated(state, id) {
   const light = hueLights.get(id);
-  let shouldUpdate = false;
   if (light.get('brightness') !== state.bri) {
     console.log(JSON.stringify({
       id,
@@ -53,25 +91,17 @@ function hasLightUpdated(state, id) {
   }
 }
 
-function printLightList() {
-  hueLights.map(light => {
-    console.log(JSON.stringify(light, null, 2));
-  }) 
-}
-
-function printLight(id) {
-  console.log(JSON.stringify(hueLights.get(id), null, 2));
-}
-
 let hueLights = Immutable.Map();
 
-setInterval(() => {
-  getLights();
-  hueLights.map((light, id) => {
-    getLightStatus(id);
-  });
-}, 1500);
+// get list of lights
+initializeLightList();
 
+// while running 
+setInterval(() => {
+  // check for new lights, and removals of lights
+  updateLightList();
+
+}, 1500);
 
 const port = process.env.PORT || 3000;
 app.listen(port);
