@@ -12,7 +12,6 @@ app.get('/', function (req, res) {
 })
 
 function initializeLightList() {
-  console.log('requesting status of all lights');
   request(`${hueBridgeUrl}/api/${username}/lights`, { json: true }, (err, res, body) => {
     if (err) { return console.log(err); }
     for (const [key, value] of Object.entries(body)) {
@@ -28,7 +27,6 @@ function initializeLightList() {
 }
 
 function updateLightList() {
-  console.log('updateLightList');
   request(`${hueBridgeUrl}/api/${username}/lights`, { json: true }, (err, res, body) => {
     if (err) { return console.log(err); }
     hueLights = hueLights.filter((light, id) => {
@@ -40,6 +38,7 @@ function updateLightList() {
           name: value.name,
           id: key
         }));
+        getLightStatus(key);
       }
     }
       // check for change of state and print state update
@@ -51,7 +50,6 @@ function updateLightList() {
 }
 
 function getLightStatus(id) {
-  console.log(`getLightStatus: ${id}`);
   request(`${hueBridgeUrl}/api/${username}/lights/${id}`, { json: true }, (err, res, body) => {
     if (err) { return console.log(err); }
     hueLights = hueLights.mergeIn(id, {
@@ -64,7 +62,6 @@ function getLightStatus(id) {
 }
 
 function updateLightStatus(id) {
-  console.log(`updateLightStatus: ${id}`);
   request(`${hueBridgeUrl}/api/${username}/lights/${id}`, { json: true }, (err, res, body) => {
     if (err) { return console.log(err); }
     hasLightUpdated(body.state, id);
